@@ -3,6 +3,8 @@ import numpy as np
 from torch.utils.data import Dataset
 from collections import Counter
 
+from torch.utils.data import DataLoader
+from torch.nn.utils.rnn import pad_sequence
 from PIL import Image
 import os
 
@@ -44,7 +46,7 @@ class Vocabulary:
 
 
 class FlickrDataset(Dataset):
-    def __init__(self, root_dir, df, vocab, transform=None, max_tokens=25):
+    def __init__(self, root_dir, df, vocab, transform=None, max_tokens=50):
         self.root_dir = root_dir
         self.df = df
         self.vocab = vocab
@@ -70,14 +72,27 @@ class FlickrDataset(Dataset):
         # Truncamento (Corta se exceder max_tokens)
         if len(tokenized_caption) > self.max_tokens:
             tokenized_caption = tokenized_caption[:self.max_tokens]
-        
-        # Padding (Preenche com <PAD> se for menor)
-        else:
-            padding_len = self.max_tokens - len(tokenized_caption)
-            tokenized_caption += [self.vocab.stoi["<PAD>"]] * padding_len
 
         return image, torch.tensor(tokenized_caption)
 
+def preprocess_data(train_dataset: FlickrDataset, val_dataset: FlickrDataset, test_dataset: FlickrDataset, batch_size:int, padding_idx=0):
+
+    def collate_fn(batch):
+        # Sorting batch in descending order here to save some computational cost instead of sorting the batch in the forward pass by the pack padded sequence method
+        batch.sort(key=lambda x : len(x[1]), reverse=True)
+        images = torch.stack([x[0] for x in batch], dim=0)
+        tokenized_captions = [x[1] for x in batch]
+        tokenized_captions_lengths = torch.tensor([len(x[1]) for x in batch], dtype=torch.long)
+        tokenized_captions = pad_sequence(tokenized_captions, batch_first=True, padding_value=padding_idx)
+        return images, tokenized_captions, tokenized_captions_lengths
+    
+    cpu_count = os.cpu_count()
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, collate_fn=collate_fn, num_workers=cpu_count, pin_memory=True)
+    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, collate_fn=collate_fn, num_workers=cpu_count, pin_memory=True)
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, collate_fn=collate_fn, num_workers=cpu_count, pin_memory=True)
+
+    return train_loader, val_loader, test_loader
+    
 def build_glove_matrix(vocab,glove_path, embedding_dim= 100):
     embedding_index = {}
     with open (glove_path,'r', encoding='utf-8') as f:
