@@ -2,16 +2,18 @@ import torch
 from torch import nn
 from tqdm import tqdm
 from src.utils import write_loss_graph
+from torch.nn.utils import clip_grad_norm_
 import os
+import PIL
 
 # Integrando tudo em uma classe
-    
 class ImageCaptionTrainer:
-    def __init__(self, model, optimizer, loss_function, device=None):
+    def __init__(self, model, optimizer, loss_function, clip_norm, device=None):
         self.model = model
         self.optimizer = optimizer
         self.device = device or torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.loss_function = loss_function
+        self.clip_norm=clip_norm
         
         self.model.to(self.device)
 
@@ -38,6 +40,9 @@ class ImageCaptionTrainer:
             loss = self.loss_function(logits_flattened, captions_flattened)
             
             loss.backward()
+
+            clip_grad_norm_(self.model.parameters(), self.clip_norm)
+
             self.optimizer.step()
             
             total_loss += loss.item() * images.size(0)
@@ -122,4 +127,3 @@ class ImageCaptionTrainer:
                     break
             
             write_loss_graph(train_losses_list, val_losses_list)
-    
