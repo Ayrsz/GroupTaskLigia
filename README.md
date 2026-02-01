@@ -37,7 +37,7 @@ git clone [https://github.com/seu-usuario/see4you.git](https://github.com/seu-us
 cd see4you
 pip install -r requirements.txt
 ```
-### 📥 2. Preparação dos Dados
+### 📥 2. Download dos Dados
 
 Antes de iniciar o treinamento, é necessário configurar o ambiente e baixar os dados necessários. Execute o notebook **`setup.ipynb`** para realizar este processo.
 
@@ -46,7 +46,20 @@ Antes de iniciar o treinamento, é necessário configurar o ambiente e baixar os
 * **Embeddings:** Realiza o download dos embeddings pré-treinados **FastText**.
 * **Estrutura:** Cria automaticamente as pastas `/data` e `/embeddings` no diretório raiz do projeto.
 
-### 📊 3. Treinamento e Avaliação
+### 📥 2. Preparação dos Dados
+Em seguida, é necessário fazer o tratamento dos dados usados no treinamento. Execute o notebook **`eda.ipynb`** para realizar este processo.
+
+### 🔬 3. Análise e Tratamento de Dados (EDA)
+
+Em seguida, é necessário fazer o tratamento dos dados usados no treinamento. Execute o notebook **`eda.ipynb`** para realizar este processo.
+
+**O que este notebook faz:**
+* **Análise Exploratória:** Gera estatísticas e visualizações sobre as imagens e o tamanho das legendas.
+* **Limpeza:** Aplica filtros e tratamentos para remover ruídos ou dados inconsistentes.
+* **Exportação:** Salva o dataset limpo na pasta **`data/cleaned`**, que será a fonte oficial para o treinamento.
+
+
+### 📊 4. Treinamento e Avaliação
 
 Com os dados organizados, execute o notebook **`training.ipynb`** para iniciar o pipeline de Deep Learning.
 
